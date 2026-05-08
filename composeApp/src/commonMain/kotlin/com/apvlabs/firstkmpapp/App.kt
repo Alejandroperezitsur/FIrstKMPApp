@@ -57,9 +57,33 @@ fun WorldClockApp() {
     var currentTime by remember { mutableStateOf(Clock.System.now()) }
     val preferences = ClockManager.getPreferences()
     var currentTheme by remember { mutableStateOf(ThemeManager.getThemeMode()) }
+    var showSettings by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(true) }
+    
+    // Initialize storage on app start
+    LaunchedEffect(Unit) {
+        try {
+            ClockManager.initializeStorage()
+            isLoading = false
+        } catch (e: Exception) {
+            println("Error initializing storage: ${e.message}")
+            isLoading = false
+        }
+    }
+    
+    // Update theme when preferences change
+    LaunchedEffect(preferences.themeMode) {
+        val themeMode = when (preferences.themeMode) {
+            "light" -> ThemeMode.LIGHT
+            "dark" -> ThemeMode.DARK
+            else -> ThemeMode.AUTO
+        }
+        currentTheme = themeMode
+        ThemeManager.setThemeMode(currentTheme)
+    }
     
     // Auto-refresh time
-    LaunchedEffect(preferences.autoRefresh) {
+    LaunchedEffect(preferences.autoRefresh, preferences.refreshInterval) {
         if (preferences.autoRefresh) {
             while (true) {
                 delay(preferences.refreshInterval * 1000L)
@@ -72,19 +96,18 @@ fun WorldClockApp() {
     var searchQuery by remember { mutableStateOf("") }
     var showSearch by remember { mutableStateOf(false) }
     
-    // Update theme when changed
-    LaunchedEffect(currentTheme) {
-        ThemeManager.setThemeMode(currentTheme)
-    }
-    
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            // Header
-            TopAppBar(
+    // Show loading screen while initializing
+    if (isLoading) {
+        LoadingScreen()
+    } else {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                // Header
+                TopAppBar(
                 title = {
                     Text(
                         "World Clock",
@@ -119,6 +142,9 @@ fun WorldClockApp() {
                         }
                         Icon(icon, contentDescription = "Toggle Theme")
                     }
+                    IconButton(onClick = { showSettings = true }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -128,15 +154,17 @@ fun WorldClockApp() {
             
             // Search Bar
             if (showSearch) {
-                SearchBar(
+                EnhancedSearchBar(
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
-                    onSearch = { /* Handle search */ },
+                    onSearch = { query ->
+                        ClockManager.addToSearchHistory(query)
+                    },
                     onActiveChange = { showSearch = it },
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     placeholder = { Text("Search clocks...") },
                     active = false
-                ) {}
+                )
             }
             
             // Clocks List
@@ -166,6 +194,42 @@ fun WorldClockApp() {
                     ClockManager.addClock(location)
                     showAddClockDialog = false
                 }
+            )
+        }
+        
+        // Settings Screen
+        if (showSettings) {
+            SettingsScreen(
+                onBack = { showSettings = false },
+                onPreferencesUpdated = {
+                    // Preferences are already updated in ClockManager
+                    showSettings = false
+                }
+            )
+        }
+        }
+    }
+}
+
+@Composable
+fun LoadingScreen() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(48.dp),
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Loading World Clock...",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -268,12 +332,14 @@ fun ClockCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                    // Country flag or location icon
-                    Text(
-                        text = CountryFlagService.getLocationIcon(clock.location),
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
+                    // Country flag or location icon (if enabled)
+                    if (preferences.showCountryFlags) {
+                        Text(
+                            text = CountryFlagService.getLocationIcon(clock.location),
+                            style = MaterialTheme.typography.headlineMedium,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                    }
                     
                     Column {
                         Text(
@@ -290,13 +356,15 @@ fun ClockCard(
                 }
                 
                 Row {
-                    // Day/Night indicator
-                    Icon(
-                        imageVector = if (isDayTime) Icons.Default.WbSunny else Icons.Default.NightsStay,
-                        contentDescription = if (isDayTime) "Day" else "Night",
-                        tint = if (isDayTime) Color(0xFFFF9800) else Color(0xFF2196F3),
-                        modifier = Modifier.size(24.dp)
-                    )
+                    // Day/Night indicator (if enabled)
+                    if (preferences.showDayNightIndicator) {
+                        Icon(
+                            imageVector = if (isDayTime) Icons.Default.WbSunny else Icons.Default.NightsStay,
+                            contentDescription = if (isDayTime) "Day" else "Night",
+                            tint = if (isDayTime) Color(0xFFFF9800) else Color(0xFF2196F3),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                     
                     Spacer(modifier = Modifier.width(8.dp))
                     
