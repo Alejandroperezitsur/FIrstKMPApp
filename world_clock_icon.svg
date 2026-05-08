@@ -1,0 +1,14 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer Circle -->
+  <circle cx="50" cy="50" r="48" stroke="#1976D2" stroke-width="4" fill="white" />
+  <!-- Inner Decoration -->
+  <circle cx="50" cy="50" r="40" stroke="#D3E3FD" stroke-width="2" fill="none" />
+  <!-- Hour Markers -->
+  <path d="M50 10 L50 20 M50 90 L50 80 M10 50 L20 50 M90 50 L80 50" stroke="#1976D2" stroke-width="4" />
+  <!-- Hour Hand -->
+  <path d="M50 50 L75 50" stroke="#535E70" stroke-width="4" stroke-linecap="round" />
+  <!-- Minute Hand -->
+  <path d="M50 50 L50 25" stroke="#1976D2" stroke-width="4" stroke-linecap="round" />
+  <!-- Center Point -->
+  <circle cx="50" cy="50" r="3" fill="#1976D2" />
+</svg>
