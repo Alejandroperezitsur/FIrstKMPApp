@@ -1,7 +1,7 @@
 package com.apvlabs.firstkmpapp
 
 // Web implementation using Web Notifications API with basic JS interop
-private suspend fun NotificationManager.showNotificationPlatform(notification: NotificationData): Boolean {
+actual suspend fun showNotificationPlatform(notification: NotificationData): Boolean {
     return try {
         // Check if notifications are supported
         if (!isNotificationSupported()) {
@@ -25,7 +25,7 @@ private suspend fun NotificationManager.showNotificationPlatform(notification: N
     }
 }
 
-private suspend fun NotificationManager.cancelNotificationPlatform(notificationId: String) {
+actual suspend fun cancelNotificationPlatform(notificationId: String) {
     try {
         // Web notifications don't have a direct cancel-by-tag method
         // We could track active notifications and close them
@@ -36,7 +36,7 @@ private suspend fun NotificationManager.cancelNotificationPlatform(notificationI
     }
 }
 
-private fun NotificationManager.areNotificationsEnabledPlatform(): Boolean {
+actual fun areNotificationsEnabledPlatform(): Boolean {
     return try {
         if (!isNotificationSupported()) return false
         
@@ -48,7 +48,7 @@ private fun NotificationManager.areNotificationsEnabledPlatform(): Boolean {
     }
 }
 
-private suspend fun NotificationManager.requestNotificationPermissionPlatform(): Boolean {
+actual suspend fun requestNotificationPermissionPlatform(): Boolean {
     return try {
         if (!isNotificationSupported()) return false
         
@@ -74,9 +74,9 @@ private fun createWebNotification(title: String, body: String, tag: String) {
     // Use dynamic JS evaluation to create notification
     js("""
         if (typeof window !== 'undefined' && 'Notification' in window) {
-            var notification = new Notification('$title', {
-                body: '$body',
-                tag: '$tag',
+            var notification = new Notification(title, {
+                body: body,
+                tag: tag,
                 requireInteraction: false
             });
             

@@ -2,14 +2,12 @@ package com.apvlabs.firstkmpapp
 
 import kotlinx.datetime.*
 import kotlinx.datetime.TimeZone
-import kotlin.system.getTimeMillisos
 
 object TimeService {
     
-    fun getCurrentTimeForLocation(location: Location, is24Hour: Boolean = true): String {
+    fun getCurrentTimeForLocation(location: Location, now: Instant = Clock.System.now(), is24Hour: Boolean = true): String {
         return try {
             val timeZone = TimeZone.of(location.timezoneId)
-            val now = Clock.System.now()
             val dateTimeInZone = now.toLocalDateTime(timeZone)
             
             if (is24Hour) {
@@ -25,10 +23,9 @@ object TimeService {
         }
     }
     
-    fun getCurrentDateForLocation(location: Location): String {
+    fun getCurrentDateForLocation(location: Location, now: Instant = Clock.System.now()): String {
         return try {
             val timeZone = TimeZone.of(location.timezoneId)
-            val now = Clock.System.now()
             val dateTimeInZone = now.toLocalDateTime(timeZone)
             "${dateTimeInZone.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${dateTimeInZone.dayOfMonth}, ${dateTimeInZone.year}"
         } catch (e: Exception) {
@@ -36,10 +33,9 @@ object TimeService {
         }
     }
     
-    fun getTimeZoneString(location: Location): String {
+    fun getTimeZoneString(location: Location, now: Instant = Clock.System.now()): String {
         return try {
             val timeZone = TimeZone.of(location.timezoneId)
-            val now = Clock.System.now()
             val offset = timeZone.offsetAt(now)
             val totalSeconds = offset.totalSeconds
             val hours = totalSeconds / 3600
@@ -54,10 +50,9 @@ object TimeService {
         }
     }
     
-    fun getTimeZoneAbbreviation(location: Location): String {
+    fun getTimeZoneAbbreviation(location: Location, now: Instant = Clock.System.now()): String {
         return try {
             val timeZone = TimeZone.of(location.timezoneId)
-            val now = Clock.System.now()
             timeZone.id.split("/").last().replace("_", " ")
         } catch (e: Exception) {
             location.timezoneId.split("/").last().replace("_", " ")
@@ -68,10 +63,9 @@ object TimeService {
         return "${location.city}, ${location.country}"
     }
     
-    fun isDayTime(location: Location): Boolean {
+    fun isDayTime(location: Location, now: Instant = Clock.System.now()): Boolean {
         return try {
             val timeZone = TimeZone.of(location.timezoneId)
-            val now = Clock.System.now()
             val dateTimeInZone = now.toLocalDateTime(timeZone)
             val hour = dateTimeInZone.hour
             hour in 6..18 // Consider daytime from 6 AM to 6 PM
@@ -80,11 +74,10 @@ object TimeService {
         }
     }
     
-    fun getTimeDifferenceFromLocal(location: Location): String {
+    fun getTimeDifferenceFromLocal(location: Location, now: Instant = Clock.System.now()): String {
         return try {
             val localTimeZone = TimeZone.currentSystemDefault()
             val targetTimeZone = TimeZone.of(location.timezoneId)
-            val now = Clock.System.now()
             
             val localOffset = localTimeZone.offsetAt(now)
             val targetOffset = targetTimeZone.offsetAt(now)

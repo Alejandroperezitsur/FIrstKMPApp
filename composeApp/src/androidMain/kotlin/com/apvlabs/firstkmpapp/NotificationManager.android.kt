@@ -22,7 +22,7 @@ fun setNotificationContext(context: Context) {
 }
 
 // Android-specific implementation
-private suspend fun NotificationManager.showNotificationPlatform(notification: NotificationData): Boolean {
+actual suspend fun showNotificationPlatform(notification: NotificationData): Boolean {
     return try {
         if (!::androidContext.isInitialized) {
             println("Android context not initialized")
@@ -64,7 +64,7 @@ private suspend fun NotificationManager.showNotificationPlatform(notification: N
         
         // Add vibration if enabled
         if (notification.vibration) {
-            builder.setDefaults(builder.mNotification.defaults or NotificationCompat.DEFAULT_VIBRATE)
+            builder.setVibrate(longArrayOf(0, 500))
         }
         
         // Show notification
@@ -79,7 +79,7 @@ private suspend fun NotificationManager.showNotificationPlatform(notification: N
     }
 }
 
-private suspend fun NotificationManager.cancelNotificationPlatform(notificationId: String) {
+actual suspend fun cancelNotificationPlatform(notificationId: String) {
     try {
         if (!::androidContext.isInitialized) return
         
@@ -90,7 +90,7 @@ private suspend fun NotificationManager.cancelNotificationPlatform(notificationI
     }
 }
 
-private fun NotificationManager.areNotificationsEnabledPlatform(): Boolean {
+actual fun areNotificationsEnabledPlatform(): Boolean {
     return try {
         if (!::androidContext.isInitialized) return false
         
@@ -102,7 +102,7 @@ private fun NotificationManager.areNotificationsEnabledPlatform(): Boolean {
     }
 }
 
-private suspend fun NotificationManager.requestNotificationPermissionPlatform(): Boolean {
+actual suspend fun requestNotificationPermissionPlatform(): Boolean {
     return try {
         if (!::androidContext.isInitialized) return false
         

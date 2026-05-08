@@ -9,6 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 // Define color schemes
 val LightColorScheme = lightColorScheme(
@@ -95,7 +98,7 @@ val LocalThemeMode = compositionLocalOf { ThemeMode.AUTO }
 
 // Theme manager object
 object ThemeManager {
-    private var _themeMode = ThemeMode.AUTO
+    private var _themeMode by mutableStateOf(ThemeMode.AUTO)
     
     fun getThemeMode(): ThemeMode = _themeMode
     fun setThemeMode(mode: ThemeMode) {

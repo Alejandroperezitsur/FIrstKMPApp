@@ -39,8 +39,8 @@ object StorageManager {
     
     suspend fun loadUserPreferences(): UserPreferences = withContext(Dispatchers.Default) {
         try {
-            val preferencesJson = settings.getString(USER_PREFERENCES_KEY, null)
-            if (preferencesJson != null) {
+            val preferencesJson = settings.getString(USER_PREFERENCES_KEY, "")
+            if (preferencesJson.isNotEmpty()) {
                 json.decodeFromString<UserPreferences>(preferencesJson)
             } else {
                 UserPreferences() // Return default preferences
@@ -63,8 +63,8 @@ object StorageManager {
     
     suspend fun loadWorldClocks(): List<WorldClock> = withContext(Dispatchers.Default) {
         try {
-            val clocksJson = settings.getString(WORLD_CLOCKS_KEY, null)
-            if (clocksJson != null) {
+            val clocksJson = settings.getString(WORLD_CLOCKS_KEY, "")
+            if (clocksJson.isNotEmpty()) {
                 json.decodeFromString<List<WorldClock>>(clocksJson)
             } else {
                 emptyList() // Return empty list if no saved clocks
@@ -87,8 +87,8 @@ object StorageManager {
     
     suspend fun loadSearchHistory(): List<String> = withContext(Dispatchers.Default) {
         try {
-            val historyJson = settings.getString(SEARCH_HISTORY_KEY, null)
-            if (historyJson != null) {
+            val historyJson = settings.getString(SEARCH_HISTORY_KEY, "")
+            if (historyJson.isNotEmpty()) {
                 json.decodeFromString<List<String>>(historyJson)
             } else {
                 emptyList()

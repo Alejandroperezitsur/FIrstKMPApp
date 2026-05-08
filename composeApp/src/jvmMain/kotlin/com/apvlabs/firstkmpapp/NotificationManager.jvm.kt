@@ -10,7 +10,7 @@ import java.io.ByteArrayInputStream
 import java.util.Base64
 
 // Desktop (JVM) implementation using System Tray notifications
-private suspend fun NotificationManager.showNotificationPlatform(notification: NotificationData): Boolean {
+actual suspend fun showNotificationPlatform(notification: NotificationData): Boolean {
     return try {
         if (!SystemTray.isSupported()) {
             println("System tray not supported on this platform")
@@ -57,7 +57,7 @@ private suspend fun NotificationManager.showNotificationPlatform(notification: N
     }
 }
 
-private suspend fun NotificationManager.cancelNotificationPlatform(notificationId: String) {
+actual suspend fun cancelNotificationPlatform(notificationId: String) {
     // Desktop notifications using system tray don't support canceling individual notifications
     // They auto-dismiss after a short time
     try {
@@ -67,7 +67,7 @@ private suspend fun NotificationManager.cancelNotificationPlatform(notificationI
     }
 }
 
-private fun NotificationManager.areNotificationsEnabledPlatform(): Boolean {
+actual fun areNotificationsEnabledPlatform(): Boolean {
     return try {
         SystemTray.isSupported()
     } catch (e: Exception) {
@@ -76,7 +76,7 @@ private fun NotificationManager.areNotificationsEnabledPlatform(): Boolean {
     }
 }
 
-private suspend fun NotificationManager.requestNotificationPermissionPlatform(): Boolean {
+actual suspend fun requestNotificationPermissionPlatform(): Boolean {
     // Desktop platforms generally don't require explicit permission for system tray notifications
     // But some systems might have restrictions
     return areNotificationsEnabledPlatform()

@@ -1,5 +1,6 @@
 package com.apvlabs.firstkmpapp
 
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -9,15 +10,16 @@ import androidx.compose.ui.window.rememberWindowState
 
 fun main() = application {
    val state = rememberWindowState(
-       size = DpSize(400.dp, 350.dp),
-       position = WindowPosition(300.dp, 300.dp)
+       size = DpSize(800.dp, 600.dp),
+       position = WindowPosition(Alignment.Center)
    )
    Window(
-       title = "Local Time App",
+       title = "Reloj Mundial",
        onCloseRequest = ::exitApplication,
-       state = state,
-       alwaysOnTop = true
+       state = state
    ) {
-       App()
+       WorldClockTheme {
+           App()
+       }
    }
 }

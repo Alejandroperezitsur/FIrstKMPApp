@@ -12,10 +12,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,9 +27,9 @@ fun EnhancedSearchBar(
     onSearch: (String) -> Unit,
     onActiveChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: @Composable () -> Unit = {},
     active: Boolean = false
 ) {
+    val scope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
     val searchHistory = ClockManager.getSearchHistory()
     val preferences = ClockManager.getPreferences()
@@ -42,7 +44,7 @@ fun EnhancedSearchBar(
         },
         onActiveChange = onActiveChange,
         modifier = modifier,
-        placeholder = placeholder,
+        placeholder = { Text("Buscar relojes...") },
         active = active
     ) {
         if (query.isEmpty() && searchHistory.isNotEmpty()) {
@@ -60,7 +62,7 @@ fun EnhancedSearchBar(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Recent Searches",
+                            text = "Búsquedas Recientes",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.primary
@@ -70,10 +72,12 @@ fun EnhancedSearchBar(
                             TextButton(
                                 onClick = {
                                     // Clear search history
-                                    ClockManager.clearSearchHistory()
+                                    scope.launch {
+                                        ClockManager.clearSearchHistory()
+                                    }
                                 }
                             ) {
-                                Text("Clear")
+                                Text("Limpiar")
                             }
                         }
                     }
@@ -87,7 +91,9 @@ fun EnhancedSearchBar(
                             onSearch(historyItem)
                         },
                         onRemove = {
-                            ClockManager.removeFromSearchHistory(historyItem)
+                            scope.launch {
+                                ClockManager.removeFromSearchHistory(historyItem)
+                            }
                         }
                     )
                 }
@@ -109,7 +115,7 @@ fun EnhancedSearchBar(
                             horizontalArrangement = Arrangement.Center
                         ) {
                             Text(
-                                text = "No results found",
+                                text = "No se encontraron resultados",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -268,7 +274,7 @@ fun FilterChipsSection(
             .padding(16.dp)
     ) {
         Text(
-            text = "Quick Filters",
+            text = "Filtros rápidos",
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -281,7 +287,7 @@ fun FilterChipsSection(
             FilterChip(
                 selected = preferences.searchFilterFavorites,
                 onClick = { onPreferencesChanged(preferences.copy(searchFilterFavorites = !preferences.searchFilterFavorites)) },
-                label = { Text("Favorites") },
+                label = { Text("Favoritos") },
                 leadingIcon = if (preferences.searchFilterFavorites) {
                     { Icon(Icons.Default.Favorite, contentDescription = null) }
                 } else null
@@ -290,7 +296,7 @@ fun FilterChipsSection(
             FilterChip(
                 selected = preferences.searchFilterCustom,
                 onClick = { onPreferencesChanged(preferences.copy(searchFilterCustom = !preferences.searchFilterCustom)) },
-                label = { Text("Custom") },
+                label = { Text("Personalizados") },
                 leadingIcon = if (preferences.searchFilterCustom) {
                     { Icon(Icons.Default.Add, contentDescription = null) }
                 } else null
@@ -299,7 +305,7 @@ fun FilterChipsSection(
             FilterChip(
                 selected = preferences.searchFilterPopular,
                 onClick = { onPreferencesChanged(preferences.copy(searchFilterPopular = !preferences.searchFilterPopular)) },
-                label = { Text("Popular") },
+                label = { Text("Populares") },
                 leadingIcon = if (preferences.searchFilterPopular) {
                     { Icon(Icons.Default.Star, contentDescription = null) }
                 } else null
@@ -310,7 +316,7 @@ fun FilterChipsSection(
         
         // Geographic filters
         Text(
-            text = "Geographic Filters",
+            text = "Filtros Geográficos",
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -323,13 +329,13 @@ fun FilterChipsSection(
             FilterChip(
                 selected = false, // This would need to be added to preferences
                 onClick = { /* Handle continent filter */ },
-                label = { Text("Americas") }
+                label = { Text("Américas") }
             )
             
             FilterChip(
                 selected = false,
                 onClick = { /* Handle continent filter */ },
-                label = { Text("Europe") }
+                label = { Text("Europa") }
             )
             
             FilterChip(
@@ -341,7 +347,7 @@ fun FilterChipsSection(
             FilterChip(
                 selected = false,
                 onClick = { /* Handle continent filter */ },
-                label = { Text("All") }
+                label = { Text("Todos") }
             )
         }
     }

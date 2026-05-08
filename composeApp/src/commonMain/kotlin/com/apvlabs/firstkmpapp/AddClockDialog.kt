@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -61,7 +63,7 @@ fun AddClockDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Add World Clock",
+                        text = "Añadir Reloj Mundial",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -76,7 +78,7 @@ fun AddClockDialog(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    label = { Text("Search by city or country") },
+                    label = { Text("Buscar por ciudad o país") },
                     leadingIcon = {
                         Icon(Icons.Default.Search, contentDescription = null)
                     },
@@ -101,7 +103,7 @@ fun AddClockDialog(
                             selectedCountry = it
                             selectedCity = ""
                         },
-                        label = { Text("Select Country") },
+                        label = { Text("Seleccionar País") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCountryDropdown) },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -113,8 +115,12 @@ fun AddClockDialog(
                         expanded = showCountryDropdown,
                         onDismissRequest = { showCountryDropdown = false }
                     ) {
-                        LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
-                            items(countries) { country ->
+                        Column(
+                            modifier = Modifier
+                                .heightIn(max = 200.dp)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            countries.forEach { country ->
                                 DropdownMenuItem(
                                     text = { Text(country) },
                                     onClick = {
@@ -139,7 +145,7 @@ fun AddClockDialog(
                         OutlinedTextField(
                             value = selectedCity,
                             onValueChange = { selectedCity = it },
-                            label = { Text("Select City") },
+                            label = { Text("Seleccionar Ciudad") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCityDropdown) },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -151,8 +157,12 @@ fun AddClockDialog(
                             expanded = showCityDropdown,
                             onDismissRequest = { showCityDropdown = false }
                         ) {
-                            LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
-                                items(cities) { city ->
+                            Column(
+                                modifier = Modifier
+                                    .heightIn(max = 200.dp)
+                                    .verticalScroll(rememberScrollState())
+                            ) {
+                                cities.forEach { city ->
                                     DropdownMenuItem(
                                         text = { Text(city) },
                                         onClick = {
@@ -177,7 +187,7 @@ fun AddClockDialog(
                     }
                     
                     Text(
-                        text = if (searchQuery.isNotEmpty()) "Search Results" else "Popular Locations",
+                        text = if (searchQuery.isNotEmpty()) "Resultados de búsqueda" else "Ubicaciones populares",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -205,7 +215,7 @@ fun AddClockDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel")
+                        Text("Cancelar")
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -220,7 +230,7 @@ fun AddClockDialog(
                         },
                         enabled = selectedCountry.isNotEmpty() && selectedCity.isNotEmpty()
                     ) {
-                        Text("Add Clock")
+                        Text("Añadir Reloj")
                     }
                 }
             }

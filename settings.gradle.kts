@@ -1,4 +1,4 @@
-rootProject.name = "FIrstKMPApp"
+rootProject.name = "WorldClock"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

@@ -10,7 +10,7 @@ import platform.Foundation.NSTimeInterval
 import platform.Foundation.UUID
 
 // iOS implementation using UserNotifications framework
-private suspend fun NotificationManager.showNotificationPlatform(notification: NotificationData): Boolean {
+actual suspend fun showNotificationPlatform(notification: NotificationData): Boolean {
     return try {
         val center = UNUserNotificationCenter.currentNotificationCenter()
         
@@ -50,7 +50,7 @@ private suspend fun NotificationManager.showNotificationPlatform(notification: N
     }
 }
 
-private suspend fun NotificationManager.cancelNotificationPlatform(notificationId: String) {
+actual suspend fun cancelNotificationPlatform(notificationId: String) {
     try {
         val center = UNUserNotificationCenter.currentNotificationCenter()
         center.removePendingNotificationRequestsWithIdentifiers(listOf(notificationId))
@@ -60,7 +60,7 @@ private suspend fun NotificationManager.cancelNotificationPlatform(notificationI
     }
 }
 
-private fun NotificationManager.areNotificationsEnabledPlatform(): Boolean {
+actual fun areNotificationsEnabledPlatform(): Boolean {
     return try {
         val center = UNUserNotificationCenter.currentNotificationCenter()
         // This is a simplified check - in a real app, you'd need to check authorization status
@@ -71,7 +71,7 @@ private fun NotificationManager.areNotificationsEnabledPlatform(): Boolean {
     }
 }
 
-private suspend fun NotificationManager.requestNotificationPermissionPlatform(): Boolean {
+actual suspend fun requestNotificationPermissionPlatform(): Boolean {
     return try {
         val center = UNUserNotificationCenter.currentNotificationCenter()
         val options = UNAuthorizationOptionsAlert + UNAuthorizationOptionsSound + UNAuthorizationOptionsBadge

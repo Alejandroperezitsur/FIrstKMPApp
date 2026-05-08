@@ -1,5 +1,8 @@
 package com.apvlabs.firstkmpapp
 
+import kotlin.collections.mapOf
+import kotlin.to
+
 object CountryFlagService {
     
     private val countryToFlag = mapOf(

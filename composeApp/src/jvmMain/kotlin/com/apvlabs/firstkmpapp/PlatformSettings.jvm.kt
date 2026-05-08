@@ -1,13 +1,10 @@
 package com.apvlabs.firstkmpapp
 
-import com.russhwolf.settings.JsonSettings
+import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.Settings
-import java.io.File
+import java.util.prefs.Preferences
 
 actual fun createSettings(): Settings {
-    val userHome = System.getProperty("user.home")
-    val appDir = File(userHome, ".worldclock")
-    appDir.mkdirs()
-    val settingsFile = File(appDir, "settings.json")
-    return JsonSettings(settingsFile)
+    val preferences = Preferences.userRoot().node("com.apvlabs.firstkmpapp")
+    return PreferencesSettings(preferences)
 }

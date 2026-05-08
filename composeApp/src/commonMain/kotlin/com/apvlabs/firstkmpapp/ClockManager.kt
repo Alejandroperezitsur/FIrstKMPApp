@@ -1,5 +1,14 @@
 package com.apvlabs.firstkmpapp
 
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class WorldClock(
     val id: String,
     val location: Location,
@@ -8,6 +17,7 @@ data class WorldClock(
     val order: Int = 0
 )
 
+@Serializable
 data class UserPreferences(
     // Display Settings
     val is24HourFormat: Boolean = true,
@@ -46,9 +56,9 @@ data class UserPreferences(
 )
 
 object ClockManager {
-    private val _clocks = mutableListOf<WorldClock>()
-    private var _preferences = UserPreferences()
-    private var _searchHistory = mutableListOf<String>()
+    private val _clocks = mutableStateListOf<WorldClock>()
+    private var _preferences by mutableStateOf(UserPreferences())
+    private val _searchHistory = mutableStateListOf<String>()
     
     // Initialize with some default clocks
     init {
@@ -68,7 +78,7 @@ object ClockManager {
             val savedClocks = StorageManager.loadWorldClocks()
             if (savedClocks.isNotEmpty()) {
                 _clocks.clear()
-                _clocks.addAll(savedClocks)
+                _clocks.addAll(savedClocks.distinctBy { it.id })
             } else if (_preferences.defaultClocksOnStartup) {
                 initializeDefaultClocks()
             }
@@ -85,6 +95,7 @@ object ClockManager {
     }
     
     private fun initializeDefaultClocks() {
+        _clocks.clear()
         val popularLocations = LocationData.getPopularLocations()
         val locationsToAdd = if (popularLocations.size >= 4) {
             popularLocations.subList(0, 4)
@@ -108,7 +119,7 @@ object ClockManager {
             val localTimeZone = kotlinx.datetime.TimeZone.currentSystemDefault()
             val localLocation = Location(
                 country = "Local",
-                city = "Current Time",
+                city = "Hora Actual",
                 timezoneId = localTimeZone.id,
                 utcOffsetHours = 0
             )
@@ -125,7 +136,7 @@ object ClockManager {
             // Fallback if we can't get local timezone
             val fallbackLocation = Location(
                 country = "Local",
-                city = "Current Time",
+                city = "Hora Actual",
                 timezoneId = "UTC",
                 utcOffsetHours = 0
             )
@@ -147,7 +158,7 @@ object ClockManager {
     
     suspend fun addClock(location: Location): WorldClock {
         val newClock = WorldClock(
-            id = "clock_${kotlinx.datetime.Clock.System.now().epochSeconds}",
+            id = "clock_${Clock.System.now().epochSeconds}",
             location = location,
             order = _clocks.size
         )

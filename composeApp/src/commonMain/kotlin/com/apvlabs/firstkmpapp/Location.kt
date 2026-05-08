@@ -1,7 +1,9 @@
 package com.apvlabs.firstkmpapp
 
 import kotlinx.datetime.TimeZone
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class Location(
     val country: String,
     val city: String,
@@ -197,14 +199,14 @@ object LocationData {
     
     fun getPopularLocations(): List<Location> {
         return listOf(
-            getLocationByCountryAndCity("United States", "New York"),
-            getLocationByCountryAndCity("United Kingdom", "London"),
-            getLocationByCountryAndCity("Japan", "Tokyo"),
-            getLocationByCountryAndCity("France", "Paris"),
-            getLocationByCountryAndCity("Australia", "Sydney"),
-            getLocationByCountryAndCity("China", "Beijing"),
-            getLocationByCountryAndCity("Germany", "Berlin"),
-            getLocationByCountryAndCity("India", "New Delhi")
+            getLocationByCountryAndCity("United States", "New York")?.copy(city = "Nueva York", country = "Estados Unidos"),
+            getLocationByCountryAndCity("United Kingdom", "London")?.copy(city = "Londres", country = "Reino Unido"),
+            getLocationByCountryAndCity("Japan", "Tokyo")?.copy(city = "Tokio", country = "Japón"),
+            getLocationByCountryAndCity("France", "Paris")?.copy(city = "París", country = "Francia"),
+            getLocationByCountryAndCity("Australia", "Sydney")?.copy(city = "Sídney"),
+            getLocationByCountryAndCity("China", "Beijing")?.copy(city = "Pekín"),
+            getLocationByCountryAndCity("Germany", "Berlin")?.copy(city = "Berlín", country = "Alemania"),
+            getLocationByCountryAndCity("India", "New Delhi")?.copy(city = "Nueva Delhi")
         ).filterNotNull()
     }
 }

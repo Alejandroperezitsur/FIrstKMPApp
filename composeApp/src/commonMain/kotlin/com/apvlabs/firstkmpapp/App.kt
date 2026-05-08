@@ -7,7 +7,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -34,13 +35,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlin.time.ExperimentalTimeApi
+// Note: ExperimentalTimeApi removed due to version compatibility issues
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
 
-@OptIn(ExperimentalMaterial3Api::class)
+// Note: @OptIn removed due to version compatibility issues
 // Extension functions for string operations
-fun String.isBlank(): Boolean = this.isEmpty() || this.all { it.isWhitespace() }
+fun String.isBlank(): Boolean = this.isEmpty()
 fun String.substringBeforeLast(delimiter: String): String = 
     this.lastIndexOf(delimiter).let { if (it == -1) this else this.substring(0, it) }
 
@@ -52,11 +56,12 @@ fun App() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorldClockApp() {
-    var currentTime by remember { mutableStateOf(Clock.System.now()) }
+    val scope = rememberCoroutineScope()
     val preferences = ClockManager.getPreferences()
-    var currentTheme by remember { mutableStateOf(ThemeManager.getThemeMode()) }
+    val currentTheme = ThemeManager.getThemeMode()
     var showSettings by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(true) }
     
@@ -78,18 +83,7 @@ fun WorldClockApp() {
             "dark" -> ThemeMode.DARK
             else -> ThemeMode.AUTO
         }
-        currentTheme = themeMode
-        ThemeManager.setThemeMode(currentTheme)
-    }
-    
-    // Auto-refresh time
-    LaunchedEffect(preferences.autoRefresh, preferences.refreshInterval) {
-        if (preferences.autoRefresh) {
-            while (true) {
-                delay(preferences.refreshInterval * 1000L)
-                currentTime = Clock.System.now()
-            }
-        }
+        ThemeManager.setThemeMode(themeMode)
     }
     
     var showAddClockDialog by remember { mutableStateOf(false) }
@@ -110,7 +104,7 @@ fun WorldClockApp() {
                 TopAppBar(
                 title = {
                     Text(
-                        "World Clock",
+                        "Reloj Mundial",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -129,10 +123,21 @@ fun WorldClockApp() {
                         )
                     }
                     IconButton(onClick = { 
-                        currentTheme = when (currentTheme) {
+                        val newTheme = when (currentTheme) {
                             ThemeMode.LIGHT -> ThemeMode.DARK
                             ThemeMode.DARK -> ThemeMode.AUTO
                             ThemeMode.AUTO -> ThemeMode.LIGHT
+                        }
+                        ThemeManager.setThemeMode(newTheme)
+                        
+                        // Persist theme choice in preferences
+                        scope.launch {
+                            val newMode = when (newTheme) {
+                                ThemeMode.LIGHT -> "light"
+                                ThemeMode.DARK -> "dark"
+                                ThemeMode.AUTO -> "auto"
+                            }
+                            ClockManager.updatePreferences(preferences.copy(themeMode = newMode))
                         }
                     }) {
                         val icon = when (currentTheme) {
@@ -158,20 +163,25 @@ fun WorldClockApp() {
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
                     onSearch = { query ->
-                        ClockManager.addToSearchHistory(query)
+                        scope.launch {
+                            ClockManager.addToSearchHistory(query)
+                        }
                     },
                     onActiveChange = { showSearch = it },
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    placeholder = { Text("Search clocks...") },
                     active = false
                 )
             }
             
             // Clocks List
-            val clocks = if (searchQuery.isBlank()) {
-                ClockManager.getClocks()
-            } else {
-                ClockManager.searchClocks(searchQuery)
+            val clocks by remember(searchQuery) {
+                derivedStateOf {
+                    if (searchQuery.isBlank()) {
+                        ClockManager.getClocks()
+                    } else {
+                        ClockManager.searchClocks(searchQuery)
+                    }
+                }
             }
             
             if (clocks.isEmpty()) {
@@ -179,9 +189,16 @@ fun WorldClockApp() {
             } else {
                 ClocksList(
                     clocks = clocks,
-                    currentTime = currentTime,
-                    onRemoveClock = { clockId -> ClockManager.removeClock(clockId) },
-                    onToggleFavorite = { clockId -> ClockManager.toggleFavorite(clockId) }
+                    onRemoveClock = { clockId -> 
+                        scope.launch {
+                            ClockManager.removeClock(clockId)
+                        }
+                    },
+                    onToggleFavorite = { clockId -> 
+                        scope.launch {
+                            ClockManager.toggleFavorite(clockId)
+                        }
+                    }
                 )
             }
         }
@@ -191,7 +208,9 @@ fun WorldClockApp() {
             AddClockDialog(
                 onDismiss = { showAddClockDialog = false },
                 onAddClock = { location ->
-                    ClockManager.addClock(location)
+                    scope.launch {
+                        ClockManager.addClock(location)
+                    }
                     showAddClockDialog = false
                 }
             )
@@ -227,7 +246,7 @@ fun LoadingScreen() {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Loading World Clock...",
+                text = "Cargando Reloj Mundial...",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -238,12 +257,24 @@ fun LoadingScreen() {
 @Composable
 fun ClocksList(
     clocks: List<WorldClock>,
-    currentTime: kotlinx.datetime.Instant,
     onRemoveClock: (String) -> Unit,
     onToggleFavorite: (String) -> Unit
 ) {
     val listState = rememberLazyListState()
     val preferences = ClockManager.getPreferences()
+    
+    // Auto-refresh time locally to avoid top-level recompositions
+    val currentTimeState = remember { mutableStateOf(kotlinx.datetime.Clock.System.now()) }
+    val currentTime = currentTimeState.value
+    
+    LaunchedEffect(preferences.autoRefresh, preferences.refreshInterval) {
+        if (preferences.autoRefresh) {
+            while (true) {
+                delay(preferences.refreshInterval * 1000L)
+                currentTimeState.value = kotlinx.datetime.Clock.System.now()
+            }
+        }
+    }
     
     LazyColumn(
         state = listState,
@@ -277,20 +308,20 @@ fun ClocksList(
 @Composable
 fun AnimatedEntry(
     visible: Boolean,
-    animationSpec: AnimationSpec<Float> = tween(),
+    animationSpec: FiniteAnimationSpec<Float> = tween(),
     content: @Composable AnimatedVisibilityScope.() -> Unit
 ) {
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically(
             initialOffsetY = { -it },
-            animationSpec = animationSpec
+            animationSpec = tween(durationMillis = 300)
         ) + fadeIn(
             animationSpec = animationSpec
         ),
         exit = slideOutVertically(
             targetOffsetY = { it },
-            animationSpec = animationSpec
+            animationSpec = tween(durationMillis = 300)
         ) + fadeOut(
             animationSpec = animationSpec
         ),
@@ -306,7 +337,7 @@ fun ClockCard(
     onToggleFavorite: (String) -> Unit,
     preferences: UserPreferences
 ) {
-    val isDayTime = TimeService.isDayTime(clock.location)
+    val isDayTime = TimeService.isDayTime(clock.location, currentTime)
     val backgroundColor = if (isDayTime) {
         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
     } else {
@@ -399,7 +430,7 @@ fun ClockCard(
             Spacer(modifier = Modifier.height(12.dp))
             
             // Time display
-            val timeString = TimeService.getCurrentTimeForLocation(clock.location, preferences.is24HourFormat)
+            val timeString = TimeService.getCurrentTimeForLocation(clock.location, currentTime, preferences.is24HourFormat)
             val displayTime = if (preferences.showSeconds) timeString else timeString.substringBeforeLast(":")
             
             Text(
@@ -413,7 +444,7 @@ fun ClockCard(
             // Date display
             if (preferences.showDate) {
                 Text(
-                    text = TimeService.getCurrentDateForLocation(clock.location),
+                    text = TimeService.getCurrentDateForLocation(clock.location, currentTime),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -427,14 +458,14 @@ fun ClockCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = TimeService.getTimeZoneString(clock.location),
+                    text = TimeService.getTimeZoneString(clock.location, currentTime),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
                 if (preferences.showTimeDifference && !clock.isLocalTime) {
                     Text(
-                        text = TimeService.getTimeDifferenceFromLocal(clock.location),
+                        text = TimeService.getTimeDifferenceFromLocal(clock.location, currentTime),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -459,13 +490,13 @@ fun EmptyState(onAddClock: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "No clocks added yet",
+            text = "No hay relojes añadidos",
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Add your first world clock to get started",
+            text = "Añade tu primer reloj mundial para empezar",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -473,7 +504,7 @@ fun EmptyState(onAddClock: () -> Unit) {
         Button(onClick = onAddClock) {
             Icon(Icons.Default.Add, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Add Clock")
+            Text("Añadir Reloj")
         }
     }
 }
