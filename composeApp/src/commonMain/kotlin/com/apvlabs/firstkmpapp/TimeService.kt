@@ -1,54 +1,122 @@
 package com.apvlabs.firstkmpapp
 
+import kotlinx.datetime.*
+import kotlinx.datetime.TimeZone
+import kotlin.system.getTimeMillisos
+
 object TimeService {
     
-    fun getCurrentTimeForLocation(location: Location): String {
+    fun getCurrentTimeForLocation(location: Location, is24Hour: Boolean = true): String {
         return try {
-            // Usar cálculo simple de UTC offset para evitar problemas con timezone
-            getUTCTimeWithOffset(location.utcOffsetHours)
+            val timeZone = TimeZone.of(location.timezoneId)
+            val now = Clock.System.now()
+            val dateTimeInZone = now.toLocalDateTime(timeZone)
+            
+            if (is24Hour) {
+                "${padTwoDigits(dateTimeInZone.hour)}:${padTwoDigits(dateTimeInZone.minute)}:${padTwoDigits(dateTimeInZone.second)}"
+            } else {
+                val hour = dateTimeInZone.hour
+                val displayHour = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+                val amPm = if (hour < 12) "AM" else "PM"
+                "${padTwoDigits(displayHour)}:${padTwoDigits(dateTimeInZone.minute)}:${padTwoDigits(dateTimeInZone.second)} $amPm"
+            }
         } catch (e: Exception) {
             "00:00:00"
         }
     }
     
-    fun getUTCTimeWithOffset(offsetHours: Int): String {
-        // Calcular hora actual con offset UTC
-        val totalMinutes = offsetHours * 60
-        val currentHour = (getCurrentHour() + offsetHours + 24) % 24
-        val currentMinute = getCurrentMinute()
-        val currentSecond = getCurrentSecond()
-        
-        val hour = padTwoDigits(currentHour)
-        val minute = padTwoDigits(currentMinute)
-        val second = padTwoDigits(currentSecond)
-        
-        return "$hour:$minute:$second"
+    fun getCurrentDateForLocation(location: Location): String {
+        return try {
+            val timeZone = TimeZone.of(location.timezoneId)
+            val now = Clock.System.now()
+            val dateTimeInZone = now.toLocalDateTime(timeZone)
+            "${dateTimeInZone.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${dateTimeInZone.dayOfMonth}, ${dateTimeInZone.year}"
+        } catch (e: Exception) {
+            "Unknown Date"
+        }
     }
     
     fun getTimeZoneString(location: Location): String {
-        val offset = location.utcOffsetHours
-        val sign = if (offset >= 0) "+" else ""
-        val absOffset = if (offset < 0) -offset else offset
-        val paddedOffset = padTwoDigits(absOffset)
-        return "UTC$sign$paddedOffset:00"
+        return try {
+            val timeZone = TimeZone.of(location.timezoneId)
+            val now = Clock.System.now()
+            val offset = timeZone.offsetAt(now)
+            val totalSeconds = offset.totalSeconds
+            val hours = totalSeconds / 3600
+            val minutes = (totalSeconds % 3600) / 60
+            val sign = if (hours >= 0) "+" else ""
+            "$sign${hours}:${padTwoDigits(minutes)}"
+        } catch (e: Exception) {
+            val offset = location.utcOffsetHours
+            val sign = if (offset >= 0) "+" else ""
+            val absOffset = if (offset < 0) -offset else offset
+            "UTC$sign${padTwoDigits(absOffset)}:00"
+        }
+    }
+    
+    fun getTimeZoneAbbreviation(location: Location): String {
+        return try {
+            val timeZone = TimeZone.of(location.timezoneId)
+            val now = Clock.System.now()
+            timeZone.id.split("/").last().replace("_", " ")
+        } catch (e: Exception) {
+            location.timezoneId.split("/").last().replace("_", " ")
+        }
     }
     
     fun getFormattedLocationInfo(location: Location): String {
         return "${location.city}, ${location.country}"
     }
     
-    // Funciones auxiliares simples - usar tiempo simulado para evitar problemas
-    private fun getCurrentHour(): Int {
-        // Simular hora actual basada en timezone UTC
-        return 12 // Hora base para demostración
+    fun isDayTime(location: Location): Boolean {
+        return try {
+            val timeZone = TimeZone.of(location.timezoneId)
+            val now = Clock.System.now()
+            val dateTimeInZone = now.toLocalDateTime(timeZone)
+            val hour = dateTimeInZone.hour
+            hour in 6..18 // Consider daytime from 6 AM to 6 PM
+        } catch (e: Exception) {
+            true
+        }
     }
     
-    private fun getCurrentMinute(): Int {
-        return 30
-    }
-    
-    private fun getCurrentSecond(): Int {
-        return 0
+    fun getTimeDifferenceFromLocal(location: Location): String {
+        return try {
+            val localTimeZone = TimeZone.currentSystemDefault()
+            val targetTimeZone = TimeZone.of(location.timezoneId)
+            val now = Clock.System.now()
+            
+            val localOffset = localTimeZone.offsetAt(now)
+            val targetOffset = targetTimeZone.offsetAt(now)
+            
+            val diffMinutes = (targetOffset.totalSeconds - localOffset.totalSeconds) / 60
+            val diffHours = diffMinutes / 60
+            val remainingMinutes = diffMinutes % 60
+            
+            if (diffHours == 0 && remainingMinutes == 0) {
+                "Same time"
+            } else if (diffHours > 0) {
+                val hoursText = if (diffHours == 1) "hour" else "hours"
+                val minutesText = if (remainingMinutes == 1) "minute" else "minutes"
+                if (remainingMinutes == 0) {
+                    "+$diffHours $hoursText ahead"
+                } else {
+                    "+$diffHours $hoursText $remainingMinutes $minutesText ahead"
+                }
+            } else {
+                val absHours = -diffHours
+                val absMinutes = -remainingMinutes
+                val hoursText = if (absHours == 1) "hour" else "hours"
+                val minutesText = if (absMinutes == 1) "minute" else "minutes"
+                if (absMinutes == 0) {
+                    "$absHours $hoursText behind"
+                } else {
+                    "$absHours $hoursText $absMinutes $minutesText behind"
+                }
+            }
+        } catch (e: Exception) {
+            "Unknown difference"
+        }
     }
     
     private fun padTwoDigits(number: Int): String {
