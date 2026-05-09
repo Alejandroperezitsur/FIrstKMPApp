@@ -42,7 +42,7 @@ kotlin {
     wasmJs {
         browser {
             commonWebpackConfig {
-                outputFileName = "composeApp.js"
+                outputFileName = "wasmApp.js"
             }
         }
         binaries.executable()
@@ -54,15 +54,15 @@ kotlin {
             implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
+            implementation(libs.kotlin.stdlib)
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
-            implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            implementation(libs.kotlinx.datetime)
+            api(libs.kotlinx.datetime)
             implementation(libs.mpsettings)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.compose.materialIconsExtended)
@@ -73,6 +73,8 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.compose.uiToolingPreview)
         }
         val webMain by creating {
             dependsOn(commonMain.get())

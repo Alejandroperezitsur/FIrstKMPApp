@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -49,7 +48,6 @@ fun String.substringBeforeLast(delimiter: String): String =
     this.lastIndexOf(delimiter).let { if (it == -1) this else this.substring(0, it) }
 
 @Composable
-@Preview
 fun App() {
     WorldClockTheme {
         WorldClockApp()
@@ -264,14 +262,14 @@ fun ClocksList(
     val preferences = ClockManager.getPreferences()
     
     // Auto-refresh time locally to avoid top-level recompositions
-    val currentTimeState = remember { mutableStateOf(kotlinx.datetime.Clock.System.now()) }
+    val currentTimeState = remember { mutableStateOf(Clock.System.now()) }
     val currentTime = currentTimeState.value
     
     LaunchedEffect(preferences.autoRefresh, preferences.refreshInterval) {
         if (preferences.autoRefresh) {
             while (true) {
                 delay(preferences.refreshInterval * 1000L)
-                currentTimeState.value = kotlinx.datetime.Clock.System.now()
+                currentTimeState.value = Clock.System.now()
             }
         }
     }
